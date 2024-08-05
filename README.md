@@ -1,0 +1,1 @@
+go mod init github.com/Caracioly/go-react-server
