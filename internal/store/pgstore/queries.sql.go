@@ -16,7 +16,7 @@ SELECT
     "id", "room_id", "message", "reaction_count", "answered"
 FROM messages
 WHERE
-id = $1
+    id = $1
 `
 
 func (q *Queries) GetMessage(ctx context.Context, id uuid.UUID) (Message, error) {
@@ -32,16 +32,30 @@ func (q *Queries) GetMessage(ctx context.Context, id uuid.UUID) (Message, error)
 	return i, err
 }
 
-const getMessages = `-- name: GetMessages :many
+const getRoom = `-- name: GetRoom :one
+SELECT
+    "id", "theme"
+FROM rooms
+WHERE id = $1
+`
+
+func (q *Queries) GetRoom(ctx context.Context, id uuid.UUID) (Room, error) {
+	row := q.db.QueryRow(ctx, getRoom, id)
+	var i Room
+	err := row.Scan(&i.ID, &i.Theme)
+	return i, err
+}
+
+const getRoomMessages = `-- name: GetRoomMessages :many
 SELECT
     "id", "room_id", "message", "reaction_count", "answered"
 FROM messages
 WHERE
-room_id = $1
+    room_id = $1
 `
 
-func (q *Queries) GetMessages(ctx context.Context, roomID uuid.UUID) ([]Message, error) {
-	rows, err := q.db.Query(ctx, getMessages, roomID)
+func (q *Queries) GetRoomMessages(ctx context.Context, roomID uuid.UUID) ([]Message, error) {
+	rows, err := q.db.Query(ctx, getRoomMessages, roomID)
 	if err != nil {
 		return nil, err
 	}
@@ -66,23 +80,7 @@ func (q *Queries) GetMessages(ctx context.Context, roomID uuid.UUID) ([]Message,
 	return items, nil
 }
 
-const getRoom = `-- name: GetRoom :one
-
-SELECT
-    "id", "theme"
-FROM rooms
-WHERE id = $1
-`
-
-func (q *Queries) GetRoom(ctx context.Context, id uuid.UUID) (Room, error) {
-	row := q.db.QueryRow(ctx, getRoom, id)
-	var i Room
-	err := row.Scan(&i.ID, &i.Theme)
-	return i, err
-}
-
 const getRooms = `-- name: GetRooms :many
-
 SELECT
     "id", "theme"
 FROM rooms
@@ -110,8 +108,8 @@ func (q *Queries) GetRooms(ctx context.Context) ([]Room, error) {
 
 const insertMessage = `-- name: InsertMessage :one
 INSERT INTO messages
-    ("room_id", "message") VALUES
-    ($1, $2)
+    ( "room_id", "message" ) VALUES
+    ( $1, $2 )
 RETURNING "id"
 `
 
@@ -128,10 +126,9 @@ func (q *Queries) InsertMessage(ctx context.Context, arg InsertMessageParams) (u
 }
 
 const insertRoom = `-- name: InsertRoom :one
-
 INSERT INTO rooms
-    ("theme") VALUES
-    ($1)
+    ( "theme" ) VALUES
+    ( $1 )
 RETURNING "id"
 `
 
