@@ -3,11 +3,13 @@ sql:
   - engine: "postgresql"
     queries: "./queries"
     schema: "./migrations"
-    gen: 
+    gen:
       go:
         out: "."
         package: "pgstore"
         sql_package: "pgx/v5"
+        emit_json_tags: true
+        emit_db_tags: true
         overrides:
           - db_type: "uuid"
             go_type:
